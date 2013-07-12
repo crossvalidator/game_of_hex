@@ -1,0 +1,624 @@
+#include<iostream>
+#include<math.h>
+#include<cstdlib>
+#include<ctime>
+using namespace std;
+#include"rect.h"
+#include"ezwin.h"
+#include <cassert>
+#include"randint.h"
+#include "FunctionPrototypes.h"
+
+/******************************************************************************
+winmove()
+
+Inputs: 
+	Arguments: none
+		
+	Global Variables: u, v, HexGrid
+Outputs:
+	output: if computer can win by making one move then he makes that move. 
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+
+void winmove(){
+
+int tempu=u, tempv=v;
+for(int i=1;i<=n;i++){
+	for(int j=1;j<=n;j++){
+		if(HexGrid[i][j]==4){
+			HexGrid[i][j]=0;
+			u=i; v=j;
+			if(terminate1(HexGrid)==0){
+				HexGrid[i][j]=4;
+				return;
+			}
+			else{
+				HexGrid[i][j]=4;
+				u=tempu; v=tempv;
+			}
+		}
+	}
+}
+return;
+}
+
+/******************************************************************************
+stopwinmove()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: u,v, Hexgrid
+Outputs:
+	output: if player is winning by playing one move, then comp plays that move to stop player from winning
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void stopwinmove(){
+
+int tempu=u, tempv=v;
+for(int i=1;i<=n;i++){
+	for(int j=1;j<=n;j++){
+		if(HexGrid[i][j]==4){
+			HexGrid[i][j]=1;
+			u=i; v=j;
+			if(terminate2(HexGrid)==0){
+				HexGrid[i][j]=4;
+				return;
+			}
+			else{
+				HexGrid[i][j]=4;
+				u=tempu; v=tempv;
+			}
+		}
+	}
+}
+return;
+}
+
+/******************************************************************************
+checkVirtualWin()
+
+Inputs: 
+	Arguments: none
+		
+	Global Variables: Comp
+Outputs:
+	output: declares virtualWin=1 if comp has virtually won
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+
+void checkVirtualWin(){
+if(terminate1(Comp)==0){
+	virtualWin=1;
+}
+return;
+}
+
+/******************************************************************************
+virtualWinMoveComp()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: u, v, Comp, HexGrid
+Outputs:
+	output: if comp can virtually win by making one move then he makes that move
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void virtualWinMoveComp(){
+//cout<< "virtualWInmoveComp entered"<<endl;
+
+int tempu=u, tempv=v;
+for(int i=1;i<=n;i++){
+	for(int j=1;j<=n;j++){
+		if(HexGrid[i][j]==4){
+			Comp[i][j]=6;
+			u=i; v=j;
+			if(terminate1(Comp)==0){
+				Comp[i][j]=4;
+				return;
+			}
+			else{
+				Comp[i][j]=4;
+				u=tempu; v=tempv;
+			}
+		}
+	}
+return;
+}
+}
+/******************************************************************************
+virtualWinMovePlayer()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: u,v , Player, HexGrid
+Outputs:
+	output: if player is virtually winning by making one move, comp playes there to stop player's virtualWin
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void virtualWinMovePlayer(){
+createVirtualPath_player();
+
+int tempu=u, tempv=v;
+for(int i=1;i<=n;i++){
+	for(int j=1;j<=n;j++){
+		if(Player[i][j]==4){
+			Player[i][j]=1;
+			u=i; v=j;
+			if(terminate2(Player)==0){
+				Player[i][j]=4;
+				return;
+			}
+			
+			else{
+			   	Player[i][j]=4;
+				u=tempu; v=tempv;
+			}
+		}
+	}
+}
+return;
+}
+
+/******************************************************************************
+PVC(int i1, int j1, int i2, int j2)
+
+Inputs: 
+	Arguments:	
+		1. i1, j1: coords of the 1 hexagon
+		2. i2, j2: coords of 2nd hexagon,
+			Note: the 2 hexagons are always bridge hexagons
+	Global Variables: u, v, HexGrid
+Outputs:
+	output: checks the bridge connections and decides whether to play in the bridge. playes if player is in a situation 			to break the bridge.
+    Return Value: 1 if played, 0 if not played 
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+
+int PVC(int i1, int j1, int i2, int j2){
+int x1,x2,y1,y2;
+	if (abs(i1-i2)==2){
+		x1=x2=(i1+i2)/2;
+		y1=j1;
+		y2=j2;
+	}
+	else
+	if(abs(j1-j2)==2){
+		y1=y2=(j1+j2)/2;
+		x1=i1;
+		x2=i2;
+	}
+	else{
+		x1=i1;y1=j2;
+		x2=i2;y2=j1;
+	}
+	if(HexGrid[x1][y1]==4 && HexGrid[x2][y2]==1){
+		u=x1;v=y1;
+		return 1;
+	}
+	if(HexGrid[x1][y1]==1 && HexGrid[x2][y2]==4){
+		u=x2;v=y2;
+		return 1;
+	}
+return 0;
+}
+/******************************************************************************
+PVW(int i1, int j1, int i2, int j2)
+
+Inputs: 
+	Arguments:	
+		1. i1, j1: coords of the 1 hexagon
+		2. i2, j2: coords of 2nd hexagon,
+			Note: the 2 hexagons are always bridge hexagons
+	Global Variables: u, v, HexGrid
+Outputs:
+	output: if both connections in a bridge are 6, then it playes in one of the bridges.(useful for completing
+    Return Value: 1 if played, 0 if not played 
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+
+int PVW(int i1, int j1, int i2, int j2){
+int x1,x2,y1,y2;
+	if (abs(i1-i2)==2){
+		x1=x2=(i1+i2)/2;
+		y1=j1;
+		y2=j2;
+	}
+	else
+	if(abs(j1-j2)==2){
+		y1=y2=(j1+j2)/2;
+		x1=i1;
+		x2=i2;
+	}
+	else{
+		x1=i1;y1=j2;
+		x2=i2;y2=j1;
+	}
+	if (virtualWin == 1){
+		if(Comp[x1][y1]==6 && Comp[x2][y2]==6){
+			u=x1;v=y1;
+			Comp[x2][y2]=4;
+			return 1;
+		}
+	}
+return 0;
+}
+/******************************************************************************
+reallyPVW()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: none
+Outputs:
+	output: finds bridge hexagons and call PVW over them
+    Return Value: 1 if actually played, else 0
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+int reallyPVW(){	
+//cout<<"really PVW entered"<<endl;
+	int q;
+	for (int i=0; i<=n+1; ++i){
+		for (int j=0; j<=n+1; ++j){
+			if (Comp[i][j] ==0 && Comp[i-1][j-2]==0){
+				q=PVW(i,j,i-1,j-2);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;} 
+			}
+			if (Comp[i][j]==0 &&  Comp[i-2][j-1]==0){
+				q=PVW(i,j,i-2,j-1);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i-1][j+1]==0){
+				q=PVW(i,j,i-1,j+1);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j+2]==0){
+				q=PVW(i,j,i+1,j+2);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+2][j+1]==0){
+				q=PVW(i,j,i+2,j+1);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j-1]==0){
+				q=PVW(i,j,i+1,j-1);
+				if(q==1) {cout<< "PVW: Now that my win is certain, i will realize it.\n"; return 1;}
+			}
+		}	
+	}
+return 0;
+}
+
+
+/******************************************************************************
+reallyPVC()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: none
+Outputs:
+	output: finds bridge hexagons and call PVW over them
+    Return Value: 1 if actually played, else 0
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+int reallyPVC(){	
+//cout<<"really PVC entered"<<endl;
+	int q;
+	for (int i=0; i<=n+1; ++i){
+		for (int j=0; j<=n+1; ++j){
+			if (Comp[i][j] ==0 && Comp[i-1][j-2]==0){
+				q=PVC(i,j,i-1,j-2);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n"; return 1;} 
+			}
+			if (Comp[i][j]==0 &&  Comp[i-2][j-1]==0){
+				q=PVC(i,j,i-2,j-1);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i-1][j+1]==0){
+				q=PVC(i,j,i-1,j+1);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n";return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j+2]==0){
+				q=PVC(i,j,i+1,j+2);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n"; return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+2][j+1]==0){
+				q=PVC(i,j,i+2,j+1);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n";return 1;}
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j-1]==0){
+				q=PVC(i,j,i+1,j-1);
+				if(q==1) {cout<< "PVC: U tried to break my virtual connection\n"; return 1;}
+			}
+		}	
+	}
+return 0;
+}
+
+/******************************************************************************
+createVirtualPath_player()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: Player
+Outputs:
+	output: marks virtual path of player with 7's by connecting player's bridges.
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void createVirtualPath_player(){
+	for (int i=0; i<=n+1; ++i){
+		for (int j=0; j<=n+1; ++j){
+			if (Player[i][j]==1 && Player[i-1][j-2]==1 && Player[i][j-1]==4 && Player[i-1][j-1]==4){
+				Player[i][j-1] = Player[i-1][j-1] = 7;
+			}
+			if (Player[i][j]==1 &&  Player[i-2][j-1]==1&& Player[i-1][j-1]==4 && Player[i-1][j]==4){
+				Player[i-1][j-1] = Player[i-1][j]= 7;
+			}
+			if (Player[i][j]==1 &&  Player[i-1][j+1]==1&& Player[i-1][j]==4 && Player[i][j+1]==4){
+				Player[i-1][j] = Player[i][j+1] = 7;
+			}
+			if (Player[i][j]==1 &&  Player[i+1][j+2]==1&& Player[i][j+1]==4 && Player[i+1][j+1]==4){
+				Player[i][j+1] = Player[i+1][j+1] = 7;
+			}
+			if (Player[i][j]==1 &&  Player[i+2][j+1]==1&& Player[i+1][j+1]==4 && Player[i+1][j]==4){
+				Player[i+1][j+1] = Player[i+1][j] = 7;
+			}
+			if (Player[i][j]==1 &&  Player[i+1][j-1]==1&& Player[i+1][j]==4 && Player[i][j-1]==4){
+				Player[i+1][j] = Player[i][j-1] = 7;
+			}
+		}	
+	}
+}
+
+/******************************************************************************
+reallyCreateVirtualPath(int i1, int j1, int i2, int j2)
+
+Inputs: 
+	Arguments:	
+		1. i1, j1 : coords of 1st hexagon
+		2. i2, j2 : coords of 2nd hexagon
+	Global Variables:none
+Outputs:
+	output: if the coneecting hexagons are empty, it virtually coonects them with 6's.
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void reallyCreateVirtualPath(int i1, int j1, int i2, int j2){
+
+int x1,x2,y1,y2;
+	if (abs(i1-i2)==2){
+		x1=x2=(i1+i2)/2;
+		y1=j1;
+		y2=j2;
+	}
+	else
+	if(abs(j1-j2)==2){
+		y1=y2=(j1+j2)/2;
+		x1=i1;
+		x2=i2;
+	}
+	else{
+		x1=i1;y1=j2;
+		x2=i2;y2=j1;
+	}
+	if(HexGrid[x1][y1]==4 && HexGrid[x2][y2]==4){
+		Comp[x1][y1]=6 ;Comp[x2][y2]=6;
+	}
+}
+/******************************************************************************
+createVirtualPath_comp()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: Comp
+Outputs:
+	output: creates computers virtual path as much as possible
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void createVirtualPath_comp(){		//returns 1 if actually played
+	for (int i=0; i<=n+1; ++i){
+		for (int j=0; j<=n+1; ++j){
+			if (Comp[i][j] ==0 && Comp[i-1][j-2]==0){
+				reallyCreateVirtualPath(i,j,i-1,j-2);
+			}
+			if (Comp[i][j]==0 &&  Comp[i-2][j-1]==0){
+				reallyCreateVirtualPath(i,j,i-2,j-1);
+			}
+			if (Comp[i][j]==0 &&  Comp[i-1][j+1]==0){
+				reallyCreateVirtualPath(i,j,i-1,j+1);
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j+2]==0){
+				reallyCreateVirtualPath(i,j,i+1,j+2);
+			}
+			if (Comp[i][j]==0 &&  Comp[i+2][j+1]==0){
+				reallyCreateVirtualPath(i,j,i+2,j+1);
+			}
+			if (Comp[i][j]==0 &&  Comp[i+1][j-1]==0){
+				reallyCreateVirtualPath(i,j,i+1,j-1);
+			}
+		}	
+	}
+return ;
+}
+
+/******************************************************************************
+findBridgeHex(int i, int j)
+
+Inputs: 
+	Arguments:	
+		1. i,j: coords of hexagon around which bridge is sought
+	Global Variables: u,v, HexGrid
+Outputs:
+	output:  finds all possible bridge hexagons wrt given hexagon
+    Return Value: 1 if bridge found, else 0
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+int findBridgeHex(int i, int j){		// 1 means bridge marked
+	if ( HexGrid[i-2][j-1]==4 && HexGrid[i-1][j]==4 && HexGrid[i-1][j-1]==4){
+		u=i-2; v=j-1;
+		return 1;
+	}
+	if (HexGrid[i+2][j+1]== 4 && HexGrid[i+1][j] ==4 && HexGrid[i+1][j+1]==4){
+		u=i+2; v=j+1;
+		return 1;
+	}
+	if (HexGrid[i+1][j-1]== 4 && HexGrid[i][j-1] ==4 && HexGrid[i+1][j] ==4){
+		u= i+1; v= j-1;
+		return 1;
+	}
+	if (HexGrid[i-1][j+1]== 4 && HexGrid[i][j+1] ==4 && HexGrid[i-1][j] ==4){
+		u=i-1; v=j+1;
+		return 1;
+	}
+return 0;
+}
+
+/******************************************************************************
+makeBridge()
+
+Inputs: 
+	Arguments:
+
+	Global Variables: none
+Outputs:
+	output:  marks a bridging hexagon wrt last hexagon
+    Return Value: none
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+void makeBridge(){
+int q;
+//cout<<"makeBridge"<<endl;
+	for (int i=1; i<=n; ++i){
+		for (int j=1; j<=n; ++j){
+			if (HexGrid[i][j]==0){
+				q=findBridgeHex(i,j);
+				
+			}
+			
+		}
+	}
+}
+
+/******************************************************************************
+getUV()
+
+Inputs: 
+	Arguments:	none
+		
+	Global Variables: u, v, Who, HexGrid
+	Outputs:
+	output: according to given preference order, implements all AI functions and sets the final (u,v) that comp must 				mark.
+    Return Value: none 
+    Reference Arguments: none
+
+Assumptions: n<=8
+/***********************************************************************/
+
+void getUV(){
+
+int utemp=u, vtemp=v, q;
+
+winmove();
+if (utemp!=u || vtemp!=v){
+	cout<<"winmove: I am winning with this 1 move."<<endl; 
+	return;
+}
+
+stopwinmove();
+if (utemp!=u || vtemp!=v){
+	cout<<"stopwinmove: I tried to stop u from winning."<<endl; 
+	return;
+}
+
+if (level>1){
+	q=reallyPVC();
+	if (q==1){return;}
+}
+
+if (level>1){
+	q=reallyPVW();
+	if (q==1){return;}
+}
+
+if (level>2){
+	virtualWinMoveComp();
+	if (utemp!=u || vtemp!=v){
+		cout<<"VIRTUALwinmove: By playing here, i ensure my win."<<endl;
+		return;
+	}
+}
+
+//createVirtualPath_player();
+
+if (level>2) {
+cout <<"HI"<<endl;
+	virtualWinMovePlayer();
+	if (utemp!=u || vtemp!=v){
+		cout<<"virtualWinMovePlayer: Had u played here, u wud have surely won."<<endl; 
+	return;
+	}
+}
+
+if (level>1){
+	makeBridge();
+	if (utemp!=u || vtemp!=v){
+		cout<<"makeBridge: My basic move..."<<endl;
+		return;
+	}
+}
+
+do{
+	int randU= (rand()%(n))+1 ; int randV= (rand()%(n))+1 ;
+	if(Who==0||Who==2){
+		u = int(rand()%3 +int(n/2)) ; v = int(rand()%3 +int(n/2));
+		cout<< "Random: My first move, so I will play in the middle 3 X 3."<<endl;
+	}
+	else{
+		u=randU; v=randV;
+		cout<<"Random: Alas! no logical choice."<<endl;
+	}
+}while((HexGrid[u][v]!=4));
+
+return;
+}
